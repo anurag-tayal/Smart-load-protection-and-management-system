@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart load protection and management system</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        .data-header {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .data-item {
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .led-status {
+            font-size: 20px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .led-button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .led-button.off {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="data-header">Smart load protection and management system</div>
+
+        <div class="data-item">
+            <strong>Temperature:</strong> <span id="temperature">Loading...</span> &#8451;
+        </div>
+        <div class="data-item">
+            <strong>Vmax:</strong> <span id="vmax">Loading...</span> V
+        </div>
+        <div class="data-item">
+            <strong>Vmin:</strong> <span id="vmin">Loading...</span> V
+        </div>
+        <div class="data-item">
+            <strong>Imax:</strong> <span id="imax">Loading...</span> A
+        </div>
+        <div class="data-item">
+            <strong>Imin:</strong> <span id="imin">Loading...</span> A
+        </div>
+        <div class="data-item">
+            <strong>Value 6:</strong> <span id="six">Loading...</span>
+        </div>
+
+        <!-- LED Status Section -->
+        <div class="led-status">
+            LED is <span id="ledStatus">Loading...</span>
+        </div>
+        <button id="ledButton" class="led-button">Toggle LED</button>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-database.js"></script>
+    
+    <script>
+        // Firebase configuration
+        var firebaseConfig = {
+            apiKey: "AIzaSyAMpFqXWBRDnju6IoWLFREOxk6rrxivdTg",
+            authDomain: "test1-e87df.firebaseapp.com",
+            databaseURL: "https://test1-e87df-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "test1-e87df",
+            storageBucket: "test1-e87df.appspot.com",
+            messagingSenderId: "814791000776",
+            appId: "1:814791000776:web:ebcc6d81fc210ee2301bfd"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        var database = firebase.database();
+
+        // Reference to HistoricalData
+        var dataRef = database.ref("HistoricalData");
+
+        // Get the latest data (i.e., last child of HistoricalData)
+        dataRef.limitToLast(1).on("child_added", function(snapshot) {
+            var data = snapshot.val();
+            var weight = data.Weight;
+
+            // Update the page with the latest data
+            document.getElementById("temperature").innerText = weight.Temperature;
+            document.getElementById("vmax").innerText = weight.vmax;
+            document.getElementById("vmin").innerText = weight.vmin;
+            document.getElementById("imax").innerText = weight.imax;
+            document.getElementById("imin").innerText = weight.imin;
+            document.getElementById("six").innerText = weight.six;
+        });
+
+        // Reference to LEDStatus
+        var ledRef = database.ref("LEDStatus");
+
+        // Update LED status based on Firebase
+        ledRef.on("value", function(snapshot) {
+            var ledStatus = snapshot.val();
+            document.getElementById("ledStatus").innerText = ledStatus ? "ON" : "OFF";
+            // Update the button style based on LED status
+            var ledButton = document.getElementById("ledButton");
+            if (ledStatus) {
+                ledButton.classList.remove("off");
+                ledButton.classList.add("led-button");
+                ledButton.innerText = "Turn LED OFF";
+            } else {
+                ledButton.classList.add("off");
+                ledButton.classList.remove("led-button");
+                ledButton.innerText = "Turn LED ON";
+            }
+        });
+
+        // Button to toggle LED status
+        document.getElementById("ledButton").addEventListener("click", function() {
+            var currentStatus = document.getElementById("ledStatus").innerText === "ON";
+            var newStatus = !currentStatus;
+            ledRef.set(newStatus);  // Update Firebase with the new LED status
+        });
+    </script>
+
+</body>
+</html>
